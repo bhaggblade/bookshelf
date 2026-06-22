@@ -126,5 +126,31 @@ namespace NzbDrone.Core.Test.AuthorStatsTests
             bookStats.SizeOnDisk.Should().Be(_bookFiles.Sum(x => x.Size));
             bookStats.BookFileCount.Should().Be(2);
         }
+
+        [Test]
+        public void should_count_files_on_unmonitored_edition()
+        {
+            var unmonitoredEdition = Builder<Edition>.CreateNew()
+                .With(e => e.BookId = _book.Id)
+                .With(e => e.Monitored = false)
+                .BuildNew();
+            Db.Insert(unmonitoredEdition);
+
+            _edition.Monitored = true;
+            Db.Update(_edition);
+
+            _bookFiles[0].Edition = unmonitoredEdition;
+            _bookFiles[0].EditionId = unmonitoredEdition.Id;
+            GivenBookFile();
+
+            var stats = Subject.AuthorStatistics();
+
+            stats.Should().HaveCount(1);
+            var bookStats = stats.First();
+            bookStats.BookFileCount.Should().Be(1);
+            bookStats.AvailableBookCount.Should().Be(1);
+            bookStats.BookCount.Should().Be(1);
+            bookStats.SizeOnDisk.Should().Be(_bookFiles[0].Size);
+        }
     }
 }

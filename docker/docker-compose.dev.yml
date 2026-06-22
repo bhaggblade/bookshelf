@@ -1,0 +1,29 @@
+# Local Bookshelf dev/test instance — port 8790 on the host maps to 8787 in the container.
+#
+# On your Linux Docker host (after building on that machine):
+#   cd /path/to/bookshelf
+#   ./build.sh
+#   docker compose -f docker/docker-compose.dev.yml up -d --build
+#
+# UI: http://<host>:8790
+
+services:
+  bookshelf-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: bookshelf-dev
+    ports:
+      - "8790:8787"
+    volumes:
+      - bookshelf-dev-config:/config
+    environment:
+      # Use the same metadata source as your other instances, or override:
+      # - METADATA_URL=https://api.bookinfo.pro
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    restart: unless-stopped
+
+volumes:
+  bookshelf-dev-config:

@@ -16,7 +16,7 @@ namespace NzbDrone.Core.AuthorStats
 
     public class AuthorStatisticsRepository : IAuthorStatisticsRepository
     {
-        private const string _selectTemplate = "SELECT /**select**/ FROM \"Editions\" /**join**/ /**innerjoin**/ /**leftjoin**/ /**where**/ /**groupby**/ /**having**/ /**orderby**/";
+        private const string _selectTemplate = "SELECT /**select**/ FROM \"Books\" /**join**/ /**innerjoin**/ /**leftjoin**/ /**where**/ /**groupby**/ /**having**/ /**orderby**/";
 
         private readonly IMainDatabase _database;
 
@@ -57,10 +57,9 @@ namespace NzbDrone.Core.AuthorStats
                      CASE WHEN MIN(""BookFiles"".""Id"") IS NULL THEN 0 ELSE 1 END AS ""AvailableBookCount"",
                      CASE WHEN (""Books"".""Monitored"" = {trueIndicator} AND (""Books"".""ReleaseDate"" < @currentDate) OR ""Books"".""ReleaseDate"" IS NULL) OR MIN(""BookFiles"".""Id"") IS NOT NULL THEN 1 ELSE 0 END AS ""BookCount"",
                      CASE WHEN MIN(""BookFiles"".""Id"") IS NULL THEN 0 ELSE COUNT(""BookFiles"".""Id"") END AS ""BookFileCount""")
-            .Join<Edition, Book>((e, b) => e.BookId == b.Id)
             .Join<Book, Author>((book, author) => book.AuthorMetadataId == author.AuthorMetadataId)
+            .LeftJoin<Book, Edition>((b, e) => b.Id == e.BookId)
             .LeftJoin<Edition, BookFile>((t, f) => t.Id == f.EditionId)
-            .Where<Edition>(x => x.Monitored == true)
             .GroupBy<Author>(x => x.Id)
             .GroupBy<Book>(x => x.Id)
             .AddParameters(new Dictionary<string, object> { { "currentDate", DateTime.UtcNow } });
